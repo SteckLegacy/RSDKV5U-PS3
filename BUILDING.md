@@ -2,7 +2,7 @@
 
 # Pre-requisites
 
-* Need [ps3toolchain](https://github.com/ps3dev/PS3Toolchain) and [SDL2](https://github.com/DropSonic0/Sonic-Mania-Decompilation/SDL2PSL1GHT) configured.
+* Need [ps3toolchain](https://github.com/ps3dev/PS3Toolchain) and [SDL2](https://github.com/DropSonic0/Sonic-Mania-Decompilation/tree/master/SDL2PSL1GHT) configured.
 * Need a "legitimate" copy of Sonic Mania.
 
 # Steps
@@ -17,7 +17,7 @@
 
 # Requisitos previos
 
-* Se necesita [ps3toolchain](https://github.com/ps3dev/PS3Toolchain) y [SDL2](https://github.com/DropSonic0/Sonic-Mania-Decompilation/SDL2PSL1GHT) configurados.
+* Se necesita [ps3toolchain](https://github.com/ps3dev/PS3Toolchain) y [SDL2](https://github.com/DropSonic0/Sonic-Mania-Decompilation/tree/master/SDL2PSL1GHT) configurados.
 * Se necesita una copia "legítima" de Sonic Mania.
 
 # Pasos
