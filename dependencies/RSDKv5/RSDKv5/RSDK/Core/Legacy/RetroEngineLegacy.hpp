@@ -13,6 +13,7 @@ enum RetroStates {
     ENGINE_INITDEVMENU = 2,
 
     ENGINE_SCRIPTERROR = 4,
+    ENGINE_MENUSCENE   = 5,
 };
 
 enum DeviceTypes { DEVICE_STANDARD = 0, DEVICE_MOBILE = 1 };

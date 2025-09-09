@@ -1,4 +1,5 @@
 #include "RetroEnginev4.hpp"
+#include "../../Scene/Legacy/v4/MenuLegacyv4.hpp"
 
 bool32 RSDK::Legacy::v4::LoadGameConfig(const char *filepath)
 {
@@ -255,8 +256,11 @@ void RSDK::Legacy::v4::ProcessEngine()
 
         case ENGINE_MAINGAME: ProcessStage(); break;
 
+        case ENGINE_MENUSCENE: ProcessMenu(); break;
+
         case ENGINE_INITDEVMENU:
             LoadGameConfig("Data/Game/GameConfig.bin");
+            InitMenuObjects();
             InitFirstStage();
             ResetCurrentStageFolder();
             break;

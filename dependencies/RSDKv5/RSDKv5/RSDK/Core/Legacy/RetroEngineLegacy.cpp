@@ -10,7 +10,7 @@ namespace RSDK::Legacy
 #include "v3/RetroEnginev3.cpp"
 #include "v4/RetroEnginev4.cpp"
 
-int32 gameMode       = ENGINE_MAINGAME;
+int32 gameMode       = ENGINE_MENUSCENE;
 bool32 usingBytecode = false;
 
 bool32 trialMode     = false;
