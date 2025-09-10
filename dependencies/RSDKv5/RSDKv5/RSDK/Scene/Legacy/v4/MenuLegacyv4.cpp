@@ -133,20 +133,14 @@ void LoadMenuAssets()
         objectEntityList[i].tileCollisions     = true;
     }
 
-    FileInfo info;
-    InitFileInfo(&info);
-    if (LoadFile(&info, "Jules/S1 menu/Game/Menu/MenuScene.bin", FMODE_RB)) {
-        int32 objectCount = ReadInt16(&info);
-        for (int32 i = 0; i < objectCount; ++i) {
-            uint8 type = ReadInt8(&info);
-            int32 x = ReadInt32(&info);
-            int32 y = ReadInt32(&info);
-            char buffer[256];
-            ReadString(&info, buffer);
-            CreateEntity(type, buffer, x, y);
-        }
-        CloseFile(&info);
-    }
+    CreateEntity(1, NULL, 0, 0); // Title Logo
+    CreateEntity(2, NULL, 0, 0); // Press Start
+
+    // Main Menu
+    CreateEntity(3, (void *)"1 PLAYER", SCREEN_CENTERX << 16, (SCREEN_CENTERY - 16) << 16);
+    CreateEntity(3, (void *)"OPTIONS", SCREEN_CENTERX << 16, SCREEN_CENTERY << 16);
+    CreateEntity(3, (void *)"EXIT", SCREEN_CENTERX << 16, (SCREEN_CENTERY + 16) << 16);
+    CreateEntity(4, NULL, 0, 0); // MainMenu object
 
     ProcessStartupObjects();
 }
