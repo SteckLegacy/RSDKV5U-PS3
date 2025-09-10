@@ -36,20 +36,31 @@ void Init_TitleLogo()
 
 void StageLoad_TitleLogo()
 {
-    titleLogoSpriteSheet = LoadGIF("Jules/S1 menu/Game/Menu/SonicLogo.png", 0);
+    titleLogoSpriteSheet = LoadGIF("Data/Menu/SonicLogo.png", 0);
 
-    objectScriptList[1].frameCount     = 1;
-    objectScriptList[1].spriteSheetID  = titleLogoSpriteSheet;
-    objectScriptList[1].frameListOffset = scriptFrameCount;
-
-    animFrames[scriptFrameCount].sprX    = 0;
-    animFrames[scriptFrameCount].sprY    = 0;
-    animFrames[scriptFrameCount].width   = 256;
-    animFrames[scriptFrameCount].height  = 48;
-    animFrames[scriptFrameCount].pivotX  = 0;
-    animFrames[scriptFrameCount].pivotY  = 0;
-    animFrames[scriptFrameCount].hitboxID = -1;
-    scriptFrameCount++;
+    FileInfo info;
+    InitFileInfo(&info);
+    if (LoadFile(&info, "Data/Menu/MenuAnimations.bin", FMODE_RB)) {
+        int32 animCount = ReadInt16(&info);
+        for (int32 i = 0; i < animCount; ++i) {
+            int32 frameCount = ReadInt16(&info);
+            int32 sheetID = ReadInt16(&info);
+            objectScriptList[i + 1].frameCount = frameCount;
+            objectScriptList[i + 1].spriteSheetID = sheetID;
+            objectScriptList[i + 1].frameListOffset = scriptFrameCount;
+            for (int32 f = 0; f < frameCount; ++f) {
+                animFrames[scriptFrameCount].sprX = ReadInt16(&info);
+                animFrames[scriptFrameCount].sprY = ReadInt16(&info);
+                animFrames[scriptFrameCount].width = ReadInt16(&info);
+                animFrames[scriptFrameCount].height = ReadInt16(&info);
+                animFrames[scriptFrameCount].pivotX = ReadInt16(&info);
+                animFrames[scriptFrameCount].pivotY = ReadInt16(&info);
+                animFrames[scriptFrameCount].hitboxID = -1;
+                scriptFrameCount++;
+            }
+        }
+        CloseFile(&info);
+    }
 }
 
 void Update_TitleLogo()

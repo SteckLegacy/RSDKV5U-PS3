@@ -38,9 +38,16 @@ void Init_PressStart()
 
 void StageLoad_PressStart()
 {
-    pressStartSpriteSheet = LoadSpriteSheet("Jules/S1 menu/Game/Menu/Heading_EN.fnt");
+    pressStartSpriteSheet = LoadSpriteSheet("Data/Menu/Heading_EN.fnt");
 
-    pressStartText = "PRESS START BUTTON";
+    FileInfo info;
+    InitFileInfo(&info);
+    if (LoadFile(&info, "Data/Menu/MenuText.txt", FMODE_RB)) {
+        char buffer[256];
+        ReadString(&info, buffer);
+        pressStartText = buffer;
+        CloseFile(&info);
+    }
 }
 
 void Update_PressStart()
