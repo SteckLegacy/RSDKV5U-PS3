@@ -34,6 +34,8 @@
 
 #include <sysutil/sysutil.h>
 
+#include "RSDK/Graphics/SDL2/SDL2RenderDevice.hpp"
+
 static void eventHandle(u64 status, u64 param, void * userdata) {
     _THIS = userdata;
     SDL_Window *window = NULL;
@@ -60,6 +62,18 @@ static void eventHandle(u64 status, u64 param, void * userdata) {
 	    if (window) {
 	        SDL_SendWindowEvent(window, SDL_WINDOWEVENT_ENTER, 0, 0);
 	    }
+    } else if (status == SYSUTIL_ENTER_STANDBY) {
+        // Standby mode entered
+        if (window) {
+            SDL_SendWindowEvent(window, SDL_WINDOWEVENT_LEAVE, 0, 0);
+            RSDK::RenderDevice::Release(true);
+        }
+    } else if (status == SYSUTIL_LEAVE_STANDBY) {
+        // Standby mode left
+        if (window) {
+            SDL_SendWindowEvent(window, SDL_WINDOWEVENT_ENTER, 0, 0);
+            RSDK::RenderDevice::InitGraphicsAPI();
+        }
     } else if(status == SYSUTIL_DRAW_BEGIN) {
     } else if(status == SYSUTIL_DRAW_END) {
     } else {

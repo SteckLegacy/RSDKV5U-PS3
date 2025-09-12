@@ -29,6 +29,10 @@
 #include <rsx/rsx.h>
 #include <sysutil/video.h>
 
+// These values are based on community findings and are not part of the official PSL1GHT SDK.
+#define SYSUTIL_ENTER_STANDBY 0x111
+#define SYSUTIL_LEAVE_STANDBY 0x112
+
 /* Debugging
  * 0: No debug messages
  * 1: Video debug messages
