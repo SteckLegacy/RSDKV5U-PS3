@@ -1,31 +1,12 @@
 #include "RSDK/Core/RetroEngine.hpp"
+#include "FileMap.hpp"
 #include <string.h> // For string functions
 #include <ctype.h>  // For tolower, toupper
+#include <string>
+#include <algorithm>
 
 using namespace RSDK;
 
-// Helper functions for string case conversion
-static void StrToLower(char *str) {
-    if (!str) return;
-    for (int i = 0; str[i]; i++) {
-        str[i] = tolower((unsigned char)str[i]);
-    }
-}
-
-static void StrToUpper(char *str) {
-    if (!str) return;
-    for (int i = 0; str[i]; i++) {
-        str[i] = toupper((unsigned char)str[i]);
-    }
-}
-
-static void StrToTitleCase(char *str) {
-    if (!str || str[0] == '\0') return;
-    str[0] = toupper((unsigned char)str[0]);
-    for (int i = 1; str[i]; i++) {
-        str[i] = tolower((unsigned char)str[i]);
-    }
-}
 
 RSDKFileInfo RSDK::dataFileList[DATAFILE_COUNT];
 RSDKContainer RSDK::dataPacks[DATAPACK_COUNT];
@@ -336,127 +317,19 @@ bool32 RSDK::LoadFile(FileInfo *info, const char *filename, uint8 fileMode)
     // This condition is for files not from DATA.RSDK and for file I/O
     if (fileMode == FMODE_RB || fileMode == FMODE_WB || fileMode == FMODE_RB_PLUS) { // Check if mode is one we handle for fOpen
         if ((info->externalFile || !useDataPack) && (fileMode == FMODE_RB || fileMode == FMODE_RB_PLUS)) {
-            RSDK::PrintLog(RSDK::PRINT_NORMAL, "[LoadFile]   Attempting fOpen on external file: '%s' with mode '%s'", fullFilePath, openModes[fileMode - 1]);
-            info->file = fOpen(fullFilePath, openModes[fileMode - 1]);
-            RSDK::PrintLog(RSDK::PRINT_NORMAL, "[LoadFile]     fOpen result: %p (NULL means failure) for '%s'", info->file, fullFilePath);
+            // Use the file map to get the correct path.
+            const char* pathToOpen = GetMappedFilePath(filename);
 
-            // If original fails, prepare for variations
-            if (!info->file) {
-                RSDK::PrintLog(RSDK::PRINT_NORMAL, "[LoadFile]     Initial fOpen failed for '%s'. Trying case variations.", fullFilePath);
-                char variedPath[0x100];
-                char filenameBaseCopy[0x100];
-                char currentVariation[0x100];
-                
-                const char *originalFilenamePartPtr = strrchr(fullFilePath, '/');
-                const char *winOriginalFilenamePartPtr = strrchr(fullFilePath, '\\');
-                if (winOriginalFilenamePartPtr > originalFilenamePartPtr) originalFilenamePartPtr = winOriginalFilenamePartPtr;
+            // If the file is not in the map, GetMappedFilePath returns the original filename.
+            // In that case, we must use the fullFilePath that was constructed earlier
+            // to handle mods and the user directory.
+            if (pathToOpen == filename) {
+                pathToOpen = fullFilePath;
+            }
 
-                size_t dirPathLen = 0;
-                if (originalFilenamePartPtr) { 
-                    dirPathLen = (originalFilenamePartPtr + 1) - fullFilePath;
-                    strncpy(variedPath, fullFilePath, dirPathLen); 
-                    variedPath[dirPathLen] = '\0'; 
-                    strcpy(filenameBaseCopy, originalFilenamePartPtr + 1); 
-                } else { 
-                    strcpy(filenameBaseCopy, fullFilePath);
-                    variedPath[0] = '\0'; 
-                }
-
-                if (strlen(filenameBaseCopy) > 0) {
-
-                    // Attempt 2: All-Lowercase Filename
-                    strcpy(currentVariation, filenameBaseCopy);
-                    StrToLower(currentVariation);
-                    strcpy(variedPath + dirPathLen, currentVariation); 
-                    info->file = fOpen(variedPath, openModes[fileMode - 1]);
-
-                    // Attempt 3: All-Uppercase Filename
-                    if (!info->file) {
-                        strcpy(currentVariation, filenameBaseCopy); 
-                        StrToUpper(currentVariation);
-                        strcpy(variedPath + dirPathLen, currentVariation);
-                        info->file = fOpen(variedPath, openModes[fileMode - 1]);
-                    }
-
-                    // Attempt 4: Title Case Filename
-                    if (!info->file) {
-                        strcpy(currentVariation, filenameBaseCopy); 
-                        StrToTitleCase(currentVariation);
-                        strcpy(variedPath + dirPathLen, currentVariation);
-                        info->file = fOpen(variedPath, openModes[fileMode - 1]);
-                    }
-
-                    // Attempt 5: <Name><Number><Letter>.ext Heuristic
-                    if (!info->file) {
-                        strcpy(currentVariation, filenameBaseCopy); // Use original-case filename part
-
-                        int lenFN = strlen(currentVariation);
-                        const char *dotFN = strrchr(currentVariation, '.');
-
-                        if (dotFN && dotFN != currentVariation && (dotFN - currentVariation) >= 3) { 
-                            int dotPosFN = dotFN - currentVariation;
-                            int letterPosFN = dotPosFN - 1; 
-                            int digitPosFN = letterPosFN - 1;
-
-                            if (isalpha((unsigned char)currentVariation[letterPosFN]) && isdigit((unsigned char)currentVariation[digitPosFN])) {
-                                char originalLetterFN = currentVariation[letterPosFN];
-                                char flippedLetterFN = 0;
-                                if (islower(originalLetterFN)) flippedLetterFN = toupper(originalLetterFN);
-                                else if (isupper(originalLetterFN)) flippedLetterFN = tolower(originalLetterFN);
-
-                                if (flippedLetterFN) {
-                                    currentVariation[letterPosFN] = flippedLetterFN;
-                                    strcpy(variedPath + dirPathLen, currentVariation); 
-                                    info->file = fOpen(variedPath, openModes[fileMode - 1]);
-                                }
-                            }
-                        }
-                    } // End of Attempt 5
-
-                    // Attempt 6: NEW RattleKiller.bin Heuristic
-                    if (!info->file) {
-                        char lowerFilenameCompare[0x100]; 
-                        strcpy(lowerFilenameCompare, filenameBaseCopy); 
-                        StrToLower(lowerFilenameCompare); 
-
-                        if (strcmp(lowerFilenameCompare, "rattlekiller.bin") == 0) {
-                            strcpy(variedPath + dirPathLen, "RattleKiller.bin"); 
-                            info->file = fOpen(variedPath, openModes[fileMode - 1]);
-                        }
-                    } // End of Attempt 6
-
-                    // Attempt 7: Specific Heuristic for Scene<N><V>.bin (was Attempt 6)
-                    if (!info->file) {
-                        char lowerOriginalFilenameForPattern[0x100]; 
-                        strcpy(lowerOriginalFilenameForPattern, filenameBaseCopy); 
-                        StrToLower(lowerOriginalFilenameForPattern); 
-
-                        int fnLen = strlen(lowerOriginalFilenameForPattern);
-                        if (fnLen == 11 && strncmp(lowerOriginalFilenameForPattern, "scene", 5) == 0 && isdigit(lowerOriginalFilenameForPattern[5]) && strcmp(lowerOriginalFilenameForPattern + 7, ".bin") == 0) {
-                            char sceneHeuristicPath[0x100];
-                            strncpy(sceneHeuristicPath, fullFilePath, dirPathLen); 
-                            sceneHeuristicPath[dirPathLen] = '\0'; 
-
-                            char sceneHeuristicFilename[0x100];
-                            strcpy(sceneHeuristicFilename, "Scene"); 
-                            sceneHeuristicFilename[5] = filenameBaseCopy[5]; 
-                            
-                            char originalVariantChar = filenameBaseCopy[6]; 
-                            char flippedVariantChar = 0;
-
-                            if (islower(originalVariantChar)) flippedVariantChar = toupper(originalVariantChar);
-                            else if (isupper(originalVariantChar)) flippedVariantChar = tolower(originalVariantChar);
-                            
-                            if (flippedVariantChar) {
-                                sceneHeuristicFilename[6] = flippedVariantChar;
-                                strcpy(sceneHeuristicFilename + 7, filenameBaseCopy + 7); 
-                                strcat(sceneHeuristicPath, sceneHeuristicFilename); 
-                                info->file = fOpen(sceneHeuristicPath, openModes[fileMode - 1]);
-                            }
-                        }
-                    }
-                } 
-            } 
+            RSDK::PrintLog(RSDK::PRINT_NORMAL, "[LoadFile]   Attempting fOpen on: '%s' with mode '%s'", pathToOpen, openModes[fileMode - 1]);
+            info->file = fOpen(pathToOpen, openModes[fileMode - 1]);
+            RSDK::PrintLog(RSDK::PRINT_NORMAL, "[LoadFile]     fOpen result: %p (NULL means failure) for '%s'", info->file, pathToOpen);
         } else if (fileMode == FMODE_WB) { // Write mode: use original path, no case variation
             RSDK::PrintLog(RSDK::PRINT_NORMAL, "[LoadFile]   Attempting fOpen (write mode) on external file: '%s' with mode '%s'", fullFilePath, openModes[fileMode - 1]);
             info->file = fOpen(fullFilePath, openModes[fileMode - 1]);

@@ -1,4 +1,5 @@
 #include "RSDK/Core/RetroEngine.hpp"
+#include "RSDK/Core/FileMap.hpp"
 
 using namespace RSDK;
 
@@ -633,6 +634,8 @@ void RSDK::ParseArguments(int32 argc, char *argv[])
 
 void RSDK::InitEngine()
 {
+    InitFileMap();
+
 #if RETRO_PLATFORM == RETRO_ANDROID
     ShowLoadingIcon(); // if valid
 #endif
